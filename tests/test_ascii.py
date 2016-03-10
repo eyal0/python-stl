@@ -1,11 +1,11 @@
 
+import unittest
+from stl.ascii import *
 from sys import version_info
 if version_info.major < 3:
     from StringIO import StringIO
 else:
     from io import StringIO
-import unittest
-from stl.ascii import *
 
 
 class TestScanner(unittest.TestCase):

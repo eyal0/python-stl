@@ -1,11 +1,11 @@
 
+import unittest
+from stl.binary import *
 from sys import version_info
 if version_info.major < 3:
     from StringIO import StringIO
 else:
     from io import StringIO
-import unittest
-from stl.binary import *
 
 EMPTY_HEADER = '\0' * 80
 T_HDR = '\x73\x6f\x6c\x69\x64\x20\x54\x65\x73\x74\x66\x69\x6c\x65' + ('\0'*66)
