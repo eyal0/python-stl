@@ -33,6 +33,19 @@ def read_binary_file(file):
     return stl.binary.parse(file)
 
 
+def convert_to_stream(data):
+    from sys import version_info
+    if version_info.major < 3:
+        from StringIO import StringIO
+        return StringIO(data)
+    else:
+        from io import BytesIO
+        if type(data) == bytes:
+            return BytesIO(data)
+        else:
+            return BytesIO(data.encode())
+
+
 def read_ascii_string(data):
     """
     Read geometry from a :py:class:`str` containing data in the STL *ASCII*
@@ -41,12 +54,7 @@ def read_ascii_string(data):
     This is just a wrapper around :py:func:`read_ascii_file` that first wraps
     the provided string in a :py:class:`StringIO.StringIO` object.
     """
-    from sys import version_info
-    if version_info.major < 3:
-        from StringIO import StringIO
-    else:
-        from io import StringIO
-    return parse_ascii_file(StringIO(data))
+    return parse_ascii_file(convert_to_stream(data))
 
 
 def read_binary_string(data):
@@ -57,9 +65,4 @@ def read_binary_string(data):
     This is just a wrapper around :py:func:`read_binary_file` that first wraps
     the provided string in a :py:class:`StringIO.StringIO` object.
     """
-    from sys import version_info
-    if version_info.major < 3:
-        from StringIO import StringIO
-    else:
-        from io import StringIO
-    return parse_binary_file(StringIO(data))
+    return parse_binary_file(convert_to_stream(data))
