@@ -29,11 +29,7 @@ class Solid(object):
         """
         The sum of the areas of all facets in the object.
         """
-        return reduce(
-            lambda accum, facet: accum + facet.area,
-            self.facets,
-            0.0,
-        )
+        return sum([facet.area for facet in self.facets])
 
     def write_binary(self, file):
         """
@@ -133,39 +129,33 @@ class Facet(object):
         """
         The length the side of the facet between vertices[0] and vertices[1]
         """
-        return abs(
-            math.sqrt(
+        return math.sqrt(
                 pow((self.vertices[0].x - self.vertices[1].x), 2) +
                 pow((self.vertices[0].y - self.vertices[1].y), 2) +
                 pow((self.vertices[0].z - self.vertices[1].z), 2)
-            )
-        )
+                )
 
     @property
     def b(self):
         """
         The length of the side of the facet between vertices[0] and vertices[2]
         """
-        return abs(
-            math.sqrt(
+        return math.sqrt(
                 pow((self.vertices[0].x - self.vertices[2].x), 2) +
                 pow((self.vertices[0].y - self.vertices[2].y), 2) +
                 pow((self.vertices[0].z - self.vertices[2].z), 2)
-            )
-        )
+                )
 
     @property
     def c(self):
         """
         The length of the side of the facet between vertices[1] and vertices[2]
         """
-        return abs(
-            math.sqrt(
+        return math.sqrt(
                 pow((self.vertices[1].x - self.vertices[2].x), 2) +
                 pow((self.vertices[1].y - self.vertices[2].y), 2) +
                 pow((self.vertices[1].z - self.vertices[2].z), 2)
-            )
-        )
+                )
 
     @property
     def perimeter(self):
