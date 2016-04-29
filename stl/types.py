@@ -1,4 +1,5 @@
 import math
+import functools
 
 
 class Solid(object):
@@ -51,6 +52,14 @@ class Solid(object):
         from stl.ascii import write
         write(self, file)
 
+    def sort_facets(self):
+        """
+        Sort each facet in this solid and then sort the facets list.
+        """
+        for f in self.facets:
+            f.sort_vertices()
+        self.facets.sort()
+
     def __eq__(self, other):
         if type(other) is Solid:
             if self.name != other.name:
@@ -74,6 +83,7 @@ class Solid(object):
         )
 
 
+@functools.total_ordering
 class Facet(object):
     """
     A facet (triangle) from a :py:class:`stl.Solid`.
@@ -116,6 +126,9 @@ class Facet(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __lt__(self, other):
+        return self.vertices < other.vertices
 
     def __repr__(self):
         return '<stl.types.Facet normal=%r, vertices=%r, area=%r>' % (
@@ -172,7 +185,18 @@ class Facet(object):
         p = self.perimeter / 2.0
         return abs(math.sqrt(p * (p - self.a) * (p - self.b) * (p - self.c)))
 
+    def sort_vertices(self):
+        """
+        Sort the vertices of the facet, maintaining round-robin order.
+        """
+        swap_enumerated = [(p[1], p[0]) for p in enumerate(self.vertices)]
+        index_of_min = min(swap_enumerated)[1]
+        reindexed_enumerated = [((p[1]-index_of_min) % 3, p[0])
+                                for p in swap_enumerated]
+        self.vertices = tuple(p[1] for p in sorted(reindexed_enumerated))
 
+
+@functools.total_ordering
 class Vector3d(tuple):
     """
     Three-dimensional vector.
