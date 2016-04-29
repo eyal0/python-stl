@@ -102,18 +102,15 @@ class TestTypes(unittest.TestCase):
 
         solid0 = Solid("test", [f0, f1])
         solid0.sort_facets()
-        print (solid0)
         expected_solid0 = Solid("test", [f0, f1])
         self.assertEqual(solid0, expected_solid0)
 
         solid1 = Solid("test", [f1, f0])
         solid1.sort_facets()
-        print (solid1)
         expected_solid1 = Solid("test", [f0, f1])
         self.assertEqual(solid1, expected_solid1)
 
         solid2 = Solid("test", [f1, f0b])
         solid2.sort_facets()
-        print (solid2)
         expected_solid2 = Solid("test", [f0, f1])
         self.assertEqual(solid2, expected_solid2)
