@@ -1,5 +1,6 @@
 import math
 import functools
+import numpy
 
 
 class Solid(object):
@@ -60,6 +61,20 @@ class Solid(object):
             f.sort_vertices()
         self.facets.sort()
 
+    def remove_planar_edges(self):
+        """
+        Remove edges that are between facets that are coplanar.
+
+        If two facets share an edge and those facets have the same
+        normal, then they must be coplanar.  All such common edges are
+        removed until there are none left.  The final solid may have
+        facets with more than 3 vertices.
+
+        """
+        for f0 in self:
+            for f1 in self:
+                pass
+
     def __eq__(self, other):
         if type(other) is Solid:
             if self.name != other.name:
@@ -81,6 +96,10 @@ class Solid(object):
             self.name,
             self.facets,
         )
+
+    def __iter__(self):
+        for f in self.facets:
+            yield f
 
 
 @functools.total_ordering
@@ -107,13 +126,13 @@ class Facet(object):
     vertices = None
 
     def __init__(self, normal, vertices, attributes=None):
-        self.normal = Vector3d(*normal)
-        self.vertices = tuple(
+        self.vertices = list(
             Vector3d(*x) for x in vertices
         )
-
-        if len(self.vertices) != 3:
-            raise ValueError('Must pass exactly three vertices')
+        if normal:
+            self.normal = Vector3d(*normal)
+        else:
+            self.recalculate_normal()
 
     def __eq__(self, other):
         if type(other) is Facet:
@@ -136,6 +155,10 @@ class Facet(object):
             self.vertices,
             self.area,
         )
+
+    def __iter__(self):
+        for v in self.vertices:
+            yield v
 
     @property
     def a(self):
@@ -193,7 +216,26 @@ class Facet(object):
         index_of_min = min(swap_enumerated)[1]
         reindexed_enumerated = [((p[1]-index_of_min) % 3, p[0])
                                 for p in swap_enumerated]
-        self.vertices = tuple(p[1] for p in sorted(reindexed_enumerated))
+        self.vertices = [p[1] for p in sorted(reindexed_enumerated)]
+
+    def recalculate_normal(self):
+        vertices = [numpy.array(x) for x in self.vertices]
+        normal = numpy.cross(vertices[1]-vertices[0], vertices[2]-vertices[1])
+        self.normal = Vector3d(*(normal/numpy.linalg.norm(normal)))
+
+    def split_to_triangles(self):
+        """
+        Return triangular facets.
+
+        If the shape has just 3 vertices, return a list of just the
+        original facet.  Otherwise, return a list of triangular
+        facets.  The number of returned facets is the number of
+        vertices minus 2.
+
+        """
+        for vertices in zip(self.vertices[1:], self.vertices[2:]):
+            yield Facet(self.normal,
+                        [self.vertices[0], vertices[0], vertices[1]])
 
 
 @functools.total_ordering
@@ -249,3 +291,6 @@ class Vector3d(tuple):
     @z.setter
     def z(self, value):
         self[2] = value
+
+    def map_coordinates(self, fn):
+        return Vector3d(*(fn(c) for c in self))

@@ -114,3 +114,31 @@ class TestTypes(unittest.TestCase):
         solid2.sort_facets()
         expected_solid2 = Solid("test", [f0, f1])
         self.assertEqual(solid2, expected_solid2)
+
+    def test_map_coordinates(self):
+        v = Vector3d(1.1, 2.1, 3.1)
+        self.assertEqual(v.map_coordinates(round), Vector3d(1, 2, 3))
+
+    def test_recalculate_normal(self):
+        f = Facet([0, 0, 0], [[0, 0, 0], [5, 0, 0], [0, 5, 0]])
+        f.recalculate_normal()
+        self.assertEqual(f.normal, Vector3d(0, 0, 1))
+
+        f = Facet([0, 0, 0], [[0, 0, 0], [0, 2, 0], [5, 0, 0]])
+        f.recalculate_normal()
+        self.assertEqual(f.normal, Vector3d(0, 0, -1))
+
+    def test_map_vertices(self):
+        facet = Facet([0, 0, -1], [[0, 0, 0], [0, 2, 0], [5, 0, 0]])
+        f_new = Facet(None, [Vector3d(*(coord+1 for coord in vertex))
+                             for vertex in facet])
+        f_new.recalculate_normal()
+        self.assertEqual(f_new, Facet([0, 0, -1],
+                                      [[1, 1, 1], [1, 3, 1], [6, 1, 1]]))
+
+    def test_split_to_triangles(self):
+        facet = Facet(None, [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
+        f_new = facet.split_to_triangles()
+        self.assertEqual(list(f_new),
+                         [Facet([0, 0, 1], [[0, 0, 0], [1, 0, 0], [1, 1, 0]]),
+                          Facet([0, 0, 1], [[0, 0, 0], [1, 1, 0], [0, 1, 0]])])
