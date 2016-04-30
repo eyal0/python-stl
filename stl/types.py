@@ -1,3 +1,4 @@
+import itertools
 import math
 import functools
 import numpy
@@ -61,32 +62,32 @@ class Solid(object):
             f.sort_vertices()
         self.facets.sort()
 
-    def remove_planar_edges(self):
+    def remove_planar_edge(self):
         """
-        Remove edges that are between facets that are coplanar.
+        Remove a planar edge that are between facets that are coplanar.
 
         Facets can only be joined if they have the same normal and
-        they share an edge.  They may share more than one edge but
-        those edges must be contiguous.
+        they share an edge.
 
+        Returns True if an edge was removed.
         """
-        for f0 in self:
-            for f1 in self:
-                if f0.normal == f1.normal:
-                    if (v0 in f1 for v0 in f0).count(True) > 1:
-                        # Coplanar and facing the same way
-                        # and have a common edge.
-                        # Remove their common edge.
-                        new_v = []
-                        i0 = 0
-                        while f0[i0] not in f1:
-                            new_v.append(f0[i0])
-                            i0 = (i0 + 1) % len(f0)
-                        new_v.append(f0[i0])
-                        i1 = f1.index(f0[i0])
-                        while f1[i1] not in f0:
-                            new_v.append(f1[i1])
-                            i1 = (i1 + 1) % len(f1)
+        for i, j in itertools.product(range(len(self.facets)),
+                                      range(len(self.facets))):
+            joined_facet = self.facets[i].join(self.facets[j])
+            if joined_facet:
+                new_facets = [f[1]
+                              for f in enumerate(self.facets)
+                              if f[0] != i and f[0] != j]
+                new_facets.append(joined_facet)
+                self.facets = new_facets
+                return True
+        return False
+
+    def remove_planar_edges(self):
+        count = 0
+        while self.remove_planar_edge():
+            count += 1
+        return count
 
     def __eq__(self, other):
         if type(other) is Solid:
@@ -218,8 +219,12 @@ class Facet(object):
         """
         The surface area of the facet, as computed by Heron's Formula.
         """
-        p = self.perimeter / 2.0
-        return abs(math.sqrt(p * (p - self.a) * (p - self.b) * (p - self.c)))
+        result = 0
+        for f in self.split_to_triangles():
+            p = f.perimeter / 2.0
+            result += abs(math.sqrt(p * (p - f.a) * (p - f.b) * (p - f.c)))
+        return result
+
 
     def sort_vertices(self):
         """
@@ -249,14 +254,6 @@ class Facet(object):
         for vertices in zip(self.vertices[1:], self.vertices[2:]):
             yield Facet(self.normal,
                         [self.vertices[0], vertices[0], vertices[1]])
-
-    def forward_edges(self):
-        """
-        Yields all edges as pairs of vertices, only in the forward
-        direction.
-        """
-        for e in zip(self.vertices, self.vertices[1:] + [self.vertices[0]]):
-            yield e
 
     def join(self, other):
         """

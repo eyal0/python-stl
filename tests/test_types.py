@@ -150,3 +150,9 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(f_join,
                          Facet([0, 0, 1],
                                [[1, 1, 0], [0, 1, 0], [0, 0, 0], [1, 0, 0]]))
+
+    def test_remove_planar_edges(self):
+        facet = Facet(None, [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
+        solid = Solid("test", list(facet.split_to_triangles()))
+        self.assertEqual(solid.remove_planar_edges(), 1)
+        self.assertEqual(solid, 0)
