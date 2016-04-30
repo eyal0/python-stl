@@ -65,15 +65,28 @@ class Solid(object):
         """
         Remove edges that are between facets that are coplanar.
 
-        If two facets share an edge and those facets have the same
-        normal, then they must be coplanar.  All such common edges are
-        removed until there are none left.  The final solid may have
-        facets with more than 3 vertices.
+        Facets can only be joined if they have the same normal and
+        they share an edge.  They may share more than one edge but
+        those edges must be contiguous.
 
         """
         for f0 in self:
             for f1 in self:
-                pass
+                if f0.normal == f1.normal:
+                    if (v0 in f1 for v0 in f0).count(True) > 1:
+                        # Coplanar and facing the same way
+                        # and have a common edge.
+                        # Remove their common edge.
+                        new_v = []
+                        i0 = 0
+                        while f0[i0] not in f1:
+                            new_v.append(f0[i0])
+                            i0 = (i0 + 1) % len(f0)
+                        new_v.append(f0[i0])
+                        i1 = f1.index(f0[i0])
+                        while f1[i1] not in f0:
+                            new_v.append(f1[i1])
+                            i1 = (i1 + 1) % len(f1)
 
     def __eq__(self, other):
         if type(other) is Solid:
@@ -236,6 +249,41 @@ class Facet(object):
         for vertices in zip(self.vertices[1:], self.vertices[2:]):
             yield Facet(self.normal,
                         [self.vertices[0], vertices[0], vertices[1]])
+
+    def forward_edges(self):
+        """
+        Yields all edges as pairs of vertices, only in the forward
+        direction.
+        """
+        for e in zip(self.vertices, self.vertices[1:] + [self.vertices[0]]):
+            yield e
+
+    def join(self, other):
+        """
+        Returns a new facet joining if possible, otherwise None.
+        """
+        if self.normal != other.normal:
+            return None
+        # If there is at least 1, including
+        # wrap-around, then the facets can be joined.
+        for i0 in range(len(self.vertices)):
+            i1 = (i0 + 1) % len(self.vertices)
+            for j0 in range(len(other.vertices)):
+                j1 = (j0 + 1) % len(other.vertices)
+                if(self.vertices[i0] == other.vertices[j1] and
+                   self.vertices[i1] == other.vertices[j0]):
+                    # Found a common edge.
+                    new_vertices = []
+                    i = i1
+                    while i != i0:
+                        new_vertices.append(self.vertices[i])
+                        i = (i + 1) % len(self.vertices)
+                    j = j1
+                    while j != j0:
+                        new_vertices.append(other.vertices[j])
+                        j = (j + 1) % len(other.vertices)
+                    return Facet(self.normal, new_vertices)
+        return None
 
 
 @functools.total_ordering
