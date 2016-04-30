@@ -143,14 +143,6 @@ class TestTypes(unittest.TestCase):
                          [Facet([0, 0, 1], [[0, 0, 0], [1, 0, 0], [1, 1, 0]]),
                           Facet([0, 0, 1], [[0, 0, 0], [1, 1, 0], [0, 1, 0]])])
 
-    def test_forward_edges(self):
-        facet = Facet(None, [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
-        self.assertEqual(list(facet.forward_edges()),
-                         [((0, 0, 0), (1, 0, 0)),
-                          ((1, 0, 0), (1, 1, 0)),
-                          ((1, 1, 0), (0, 1, 0)),
-                          ((0, 1, 0), (0, 0, 0))])
-
     def test_join_facets(self):
         facet = Facet(None, [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
         f_split = list(facet.split_to_triangles())
