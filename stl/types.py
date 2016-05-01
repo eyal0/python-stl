@@ -275,16 +275,22 @@ class Facet(object):
                 b = (a + 1) % len(v)
                 c = (b + 1) % len(v)
                 # We can make a facet if none of the other points are inside.
+                #sys.stderr.write("%d" % len(v))
+                #sys.stderr.write("%s\n" % v)
+                #sys.stderr.write("%s\n" % str(self.normal))
                 for x in range(len(v)):
-                    if x == a or x == b or x == c:
+                    if v[x] == v[a] or v[x] == v[b] or v[x] == v[c]:
                         continue # Don't examine the current points.
+                    #sys.stderr.write("%d,%d,%d,%d\n" % (x,a,b,c))
                     if Facet._calc_normal(v[a],v[b],v[c]) != self.normal:
-                        sys.stderr.write("Can't use upsidedown triangle.\n")
+                        #sys.stderr.write("Can't use upsidedown triangle.\n")
                         break
-                    if (Facet._calc_normal(v[x],v[a],v[b]) ==
-                        Facet._calc_normal(v[x],v[b],v[c]) ==
-                        Facet._calc_normal(v[x],v[c],v[a])):
-                        sys.stderr.write("Can't use concave triangle\n")
+                    all_normals = [
+                        Facet._calc_normal(v[x],v[a],v[b]),
+                        Facet._calc_normal(v[x],v[b],v[c]),
+                        Facet._calc_normal(v[x],v[c],v[a])]
+                    if all((x==self.normal or x is None) for x in all_normals):
+                        #sys.stderr.write("Can't use concave triangle\n")
                         break # This point is inside, we can't use it.
                 else:
                     # We didn't find an inside point, this triangle is valid.
