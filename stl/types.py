@@ -311,6 +311,12 @@ class Facet(object):
     def join(self, other):
         """
         Returns a new facet joining if possible, otherwise None.
+
+        Joining is possible if an edge is shared and the shapes are
+        normal.  Also, we only make convex shapes so we assume that
+        every three consecutive vertices have the same normal in the
+        inputs and we only join if we can ensure that the output
+        vertices will all have the same normal, too.
         """
         if self.normal != other.normal:
             return None
