@@ -278,10 +278,13 @@ class Facet(object):
                 for x in range(len(v)):
                     if x == a or x == b or x == c:
                         continue # Don't examine the current points.
+                    if Facet._calc_normal(v[a],v[b],v[c]) != self.normal:
+                        sys.stderr.write("Can't use upsidedown triangle.\n")
+                        break
                     if (Facet._calc_normal(v[x],v[a],v[b]) ==
                         Facet._calc_normal(v[x],v[b],v[c]) ==
                         Facet._calc_normal(v[x],v[c],v[a])):
-                        sys.stderr.write("Can't use this triangle")
+                        sys.stderr.write("Can't use concave triangle\n")
                         break # This point is inside, we can't use it.
                 else:
                     # We didn't find an inside point, this triangle is valid.
