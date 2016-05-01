@@ -2,6 +2,7 @@ import itertools
 import math
 import functools
 import numpy
+import sys
 
 
 class Solid(object):
@@ -73,8 +74,11 @@ class Solid(object):
         """
         for i, j in itertools.product(range(len(self.facets)),
                                       range(len(self.facets))):
+            if i == j:
+                continue
             joined_facet = self.facets[i].join(self.facets[j])
             if joined_facet:
+                sys.stderr.write("joining %d,%d" % (i,j))
                 new_facets = [f[1]
                               for f in enumerate(self.facets)
                               if f[0] != i and f[0] != j]
@@ -239,7 +243,11 @@ class Facet(object):
     def recalculate_normal(self):
         vertices = [numpy.array(x) for x in self.vertices]
         normal = numpy.cross(vertices[1]-vertices[0], vertices[2]-vertices[1])
-        self.normal = Vector3d(*(normal/numpy.linalg.norm(normal)))
+        length = numpy.linalg.norm(normal)
+        if length != 0:
+            self.normal = Vector3d(*(normal/length))
+        else:
+            self.normal = None
 
     def split_to_triangles(self):
         """
