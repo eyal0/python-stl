@@ -70,7 +70,7 @@ class Solid(object):
         Facets can only be joined if they have the same normal and
         they share an edge.
 
-        Returns True if an edge was removed.
+        Returns the new edge if one was removed, otherwise None.
         """
         for i, j in itertools.product(range(len(self.facets)),
                                       range(len(self.facets))):
@@ -78,14 +78,13 @@ class Solid(object):
                 continue
             joined_facet = self.facets[i].join(self.facets[j])
             if joined_facet:
-                sys.stderr.write("joining %d,%d" % (i,j))
                 new_facets = [f[1]
                               for f in enumerate(self.facets)
                               if f[0] != i and f[0] != j]
                 new_facets.append(joined_facet)
                 self.facets = new_facets
-                return True
-        return False
+                return joined_facet
+        return None
 
     def remove_planar_edges(self):
         count = 0
@@ -236,18 +235,28 @@ class Facet(object):
         """
         swap_enumerated = [(p[1], p[0]) for p in enumerate(self.vertices)]
         index_of_min = min(swap_enumerated)[1]
-        reindexed_enumerated = [((p[1]-index_of_min) % 3, p[0])
+        reindexed_enumerated = [((p[1]-index_of_min) % len(self.vertices),
+                                 p[0])
                                 for p in swap_enumerated]
         self.vertices = [p[1] for p in sorted(reindexed_enumerated)]
 
-    def recalculate_normal(self):
-        vertices = [numpy.array(x) for x in self.vertices]
+    @staticmethod
+    def _calc_normal(v0, v1, v2):
+        """
+        Returns the unit normal of the three vertices using the
+        right-hand rule.  Returns None if colinear inputs.
+
+        """
+        vertices = [numpy.array(x) for x in [v0,v1,v2]]
         normal = numpy.cross(vertices[1]-vertices[0], vertices[2]-vertices[1])
         length = numpy.linalg.norm(normal)
         if length != 0:
-            self.normal = Vector3d(*(normal/length))
+            return Vector3d(*(normal/length))
         else:
-            self.normal = None
+            return None
+
+    def recalculate_normal(self):
+        self.normal = Facet._calc_normal(*self.vertices[0:3])
 
     def split_to_triangles(self):
         """
@@ -262,6 +271,42 @@ class Facet(object):
         for vertices in zip(self.vertices[1:], self.vertices[2:]):
             yield Facet(self.normal,
                         [self.vertices[0], vertices[0], vertices[1]])
+
+    def remove_1d_vertex(self):
+        """
+        Removes a 1d vertex is found in the facet and returns the vertex.
+        Returns None if not found.
+
+        After join, there can be entries in the list of vertices such
+        that a->b->a.  Those don't contribute to the area and can be
+        removed by removing the middle and either the first or second
+        vertex.
+        """
+        for i in range(len(self.vertices)):
+            j = (i + 1) % len(self.vertices)
+            k = (i + 2) % len(self.vertices)
+            if self.vertices[i] == self.vertices[k]:
+                # Remove the bigger first so that the indices don't move.
+                result = self.vertices[j]
+                self.vertices.pop(max(j,k))
+                self.vertices.pop(min(j,k))
+                return result
+        return None
+
+    def remove_colinear_vertex(self):
+        """
+        Removed a vertex if it is in a line with the previous and next.
+        Returns the removed vertex or None if there is none to remove.
+        """
+        for i in range(len(self.vertices)):
+            j = (i + 1) % len(self.vertices)
+            k = (i + 2) % len(self.vertices)
+            if not Facet._calc_normal(*(self.vertices[x] for x in [i,j,k])):
+                # Remove the middle vertex.
+                result = self.vertices[j]
+                self.vertices.pop(j)
+                return result
+        return None
 
     def join(self, other):
         """
@@ -344,6 +389,3 @@ class Vector3d(tuple):
     @z.setter
     def z(self, value):
         self[2] = value
-
-    def map_coordinates(self, fn):
-        return Vector3d(*(fn(c) for c in self))
