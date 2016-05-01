@@ -3,7 +3,7 @@ import math
 import functools
 import numpy
 import sys
-
+import copy
 
 class Solid(object):
     """
@@ -265,12 +265,31 @@ class Facet(object):
         If the shape has just 3 vertices, return a list of just the
         original facet.  Otherwise, return a list of triangular
         facets.  The number of returned facets is the number of
-        vertices minus 2.
-
+        vertices minus 2.  Make sure each new facet has the same
+        normal as the original facet, in case of concave shapes.
         """
-        for vertices in zip(self.vertices[1:], self.vertices[2:]):
-            yield Facet(self.normal,
-                        [self.vertices[0], vertices[0], vertices[1]])
+        new_facets = []
+        v = [Vector3d(*(c for c in v)) for v in self.vertices]
+        while len(v) > 3:
+            for a in range(len(v)):
+                b = (a + 1) % len(v)
+                c = (b + 1) % len(v)
+                # We can make a facet if none of the other points are inside.
+                for x in range(len(v)):
+                    if x == a or x == b or x == c:
+                        continue # Don't examine the current points.
+                    if (Facet._calc_normal(v[x],v[a],v[b]) ==
+                        Facet._calc_normal(v[x],v[b],v[c]) ==
+                        Facet._calc_normal(v[x],v[c],v[a])):
+                        sys.stderr.write("Can't use this triangle")
+                        break # This point is inside, we can't use it.
+                else:
+                    # We didn't find an inside point, this triangle is valid.
+                    new_facets.append(Facet(self.normal, [v[a], v[b], v[c]]))
+                    v.pop(b)
+                    break
+        new_facets.append(Facet(self.normal, v))
+        return new_facets
 
     def remove_1d_vertex(self):
         """
