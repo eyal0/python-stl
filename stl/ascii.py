@@ -241,7 +241,8 @@ def write(solid, file):
 
     file.write("solid %s\n" % name)
     for facet in solid.facets:
-        file.write("  facet normal %g %g %g\n" % facet.normal)
+        #sys.stderr.write("facet to write: %s\n" % facet.vertices)
+        file.write("  facet normal %g %g %g\n" % (facet.normal or Vector3d(0,0,0)))
         file.write("    outer loop\n")
         for vertex in facet.vertices:
             file.write("      vertex %g %g %g\n" % vertex)

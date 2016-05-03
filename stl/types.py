@@ -270,6 +270,7 @@ class Facet(object):
         """
         new_facets = []
         v = [Vector3d(*(c for c in v)) for v in self.vertices]
+        #sys.stderr.write('facet: ' + str(v) + '\n')
         while len(v) > 3:
             for a in range(len(v)):
                 b = (a + 1) % len(v)
@@ -283,6 +284,8 @@ class Facet(object):
                         continue # Don't examine the current points.
                     #sys.stderr.write("%d,%d,%d,%d\n" % (x,a,b,c))
                     if Facet._calc_normal(v[a],v[b],v[c]) != self.normal:
+                        #sys.stderr.write("n1 %s, n2 %s\n" % (str(self.normal),
+                        #                 str(Facet._calc_normal(v[a],v[b],v[c]))))
                         #sys.stderr.write("Can't use upsidedown triangle.\n")
                         break
                     all_normals = [
